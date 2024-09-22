@@ -5,6 +5,10 @@ export class SecurityApiService {
     return http.get(`/verificarusu/${email}/${password}`)
   }
 
+  selectUser(id) {
+    return http.get(`/listarusuario/${id}`)
+  }
+
   signUp(data) {
     return http.post('/usuario', data)
   }

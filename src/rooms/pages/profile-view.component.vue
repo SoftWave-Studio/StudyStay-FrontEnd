@@ -72,11 +72,26 @@
                 </span>
                 <pv-input-text
                   type="password"
-                  :value="123456789" 
+                  :value="123456789"
                   class="input-text"
                   placeholder="Contraseña" 
                 />
               </div>      
+            </div>
+
+            <div class="p-inputgroup flex-1">
+              <p class="paragraph">{{$t('profile-view.image_url')}}</p>
+              <div class="container-input">
+                <span class="p-inputgroup-addon">
+                  <i class="pi pi-image"></i>
+                </span>
+                <pv-input-text
+                  type="image_url"
+                  v-model.trim="userData.image_url"
+                  class="input-text"
+                  placeholder="URL de imagen"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -196,6 +211,7 @@ export default {
           userData.fullName = this.userData.fullName
           userData.email = this.userData.email
           userData.phone = this.userData.phone
+          userData.image_url = this.userData.image_url
           localStorage.setItem('user-data', JSON.stringify(userData))
         })
         .catch(() => {

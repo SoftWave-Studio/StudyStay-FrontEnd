@@ -97,7 +97,8 @@ const i18n = createI18n({
                 "password": "Contraseña",
                 "save-changes": "Guardar cambios",
                 "delete-account": "Eliminar cuenta",
-                "logout": "Cerrar sesión"
+                "logout": "Cerrar sesión",
+                "image_url": "URL Imagen"
             }    
         },
         en: {
@@ -194,7 +195,8 @@ const i18n = createI18n({
                 "password": "Password",
                 "save-changes": "Save changes",
                 "delete-account": "Delete account",
-                "logout": "Log out"
+                "logout": "Log out",
+                "image_url": "URL Image"
             }    
         }
     }
