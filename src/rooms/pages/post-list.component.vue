@@ -5,6 +5,7 @@ export default {
 
   data() {
     return {
+      userData: {},
       posts: [],
       postDialog: false,
       phoneDialog: false,
@@ -18,6 +19,7 @@ export default {
   },
   created() {
     this.initFilters()
+    this.userData = JSON.parse(localStorage.getItem('user-data')) //obtiene los datos del usuario guardados en el localstorage
     this.$roomsApiService
       .getAllUniversities()
       .then((response) => {
@@ -60,7 +62,12 @@ export default {
     },
 
     showPhone(post) {
-      this.phoneNumberToShow = post.user.phone
+      this.$securityApiService
+        .selectUser(post.userid)
+        .then((res) => {
+          this.phoneNumberToShow=res.data.phone
+        })
+      //this.phoneNumberToShow = post.userId
       this.phoneDialog = true
     },
     hideDialogphone() {
@@ -73,19 +80,27 @@ export default {
       return this.posts.findIndex((post) => post.id === id)
     },
 
+    updateNearestUniversities(selectedUniversities) {
+      // Transforma las universidades seleccionadas en un array de iniciales
+      this.post.nearest_universities = selectedUniversities.map((u) => u.initials)
+    },
+
     //guarda el post
     savePost() {
       this.submitted = true
       if (this.post.title) {
+        this.updateNearestUniversities(this.post.nearest_universities)
+
         this.$roomsApiService
           .createPost({
             title: this.post.title,
             description: this.post.description,
             address: this.post.address,
             price: Number(this.post.price),
-            nearestUniversities: JSON.stringify(this.post.nearestUniversities),
-            imageUrl: this.post.imageUrl,
-            userId: 1
+            nearest_universities: JSON.stringify(this.post.nearest_universities),
+            image_url: this.post.image_url,
+            rating: 0,
+            userid: this.userData.id
           })
           .then((response) => {
             this.post = response.data
@@ -175,7 +190,7 @@ export default {
         <div class="flex flex-column xl:flex-row xl:align-items-start p-4 gap-4">
           <img
             class="w-9 sm:w-16rem xl:w-10rem shadow-2 block xl:block mx-auto border-round"
-            :src="slotProps.data.imageUrl"
+            :src="slotProps.data.image_url"
             :alt="slotProps.data.title"
           />
           <div
@@ -205,13 +220,19 @@ export default {
               <div class="flex align-items-center gap-3">
                 <span class="flex align-items-center gap-2">
                   <i class="pi pi-building icon-secondary"></i>
-                  <span class="paragraph">  {{ $t('posts-view.near-to') }}
-                    {{
-                      JSON.parse(slotProps.data.nearestUniversities)
-                        .map((u) => u.initials)
-                        .join(', ')
-                    }}</span
-                  >
+                  <span class="paragraph">
+                    {{ $t('posts-view.near-to') }}
+                    <span
+                      v-for="(university, index) in JSON.parse(slotProps.data.nearest_universities)"
+                      :key="index"
+                    >
+                      {{ university
+                      }}<span
+                        v-if="index < JSON.parse(slotProps.data.nearest_universities).length - 1"
+                        >,
+                      </span>
+                    </span>
+                  </span>
                 </span>
               </div>
 
@@ -343,17 +364,18 @@ export default {
     <div class="field paragraph">
       <span class="p-float-label">
         <pv-multiselect
-          id="nearestUniversities"
-          v-model="post.nearestUniversities"
+          id="nearest_universities"
+          v-model="post.nearest_universities"
           display="chip"
           :options="universities"
           optionLabel="initials"
-          :class="{ 'p-invalid': submitted && !post.nearestUniversities }"
+          :class="{ 'p-invalid': submitted && !post.nearest_universities }"
+          @change="updateNearestUniversities"
         >
           <template #option="slotProps">
             <div class="flex align-items-center">
               <img
-                :src="slotProps.option.logoUrl"
+                :src="slotProps.option.logourl"
                 :alt="slotProps.option.initials"
                 style="width: 18px; margin-right: 10px"
               />
@@ -361,8 +383,8 @@ export default {
             </div>
           </template>
         </pv-multiselect>
-        <label for="nearestUniversities">Universidades cercanas</label>
-        <small class="p-error" v-if="submitted && !post.nearestUniversities">
+        <label for="nearest_universities">Universidades cercanas</label>
+        <small class="p-error" v-if="submitted && !post.nearest_universities">
           Selecciona las universidades cercanas
         </small>
       </span>
@@ -374,13 +396,13 @@ export default {
         <pv-input-text
           type="text"
           id="imageUrl"
-          v-model.trim="post.imageUrl"
+          v-model.trim="post.image_url"
           required="true"
           autofocus
-          :class="{ 'p-invalid': submitted && !post.imageUrl }"
+          :class="{ 'p-invalid': submitted && !post.image_url }"
         />
         <label for="imageUrl">URL de la foto</label>
-        <small class="p-error" v-if="submitted && !post.imageUrl">Ingresa una imagen</small>
+        <small class="p-error" v-if="submitted && !post.image_url">Ingresa una imagen</small>
       </span>
     </div>
 
@@ -410,7 +432,7 @@ export default {
   >
     <span class="flex align-items-center gap-2" style="font-size: 20px">
       <i class="pi pi-phone icon-secondary" style="font-size: 20px"></i>
-      <span class="paragraph">{{ phoneNumberToShow }}</span>
+      <span class="paragraph">{{phoneNumberToShow}}</span>
     </span>
   </pv-dialog>
 

@@ -3,6 +3,7 @@ import router from '../../router'
 
 export const http = axios.create({
   baseURL: 'https://studystay-backend.onrender.com/',
+  //baseURL: 'http://127.0.0.1:8000/',
   headers: {
     'Content-Type': 'application/json'
   }

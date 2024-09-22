@@ -147,7 +147,7 @@ export default {
       <!-- IMAGEN -->
       <div>
         <img
-          :src="post.imageUrl"
+          :src="post.image_url"
           :alt="post.title"
           class="habitacion"
         />
@@ -174,14 +174,20 @@ export default {
         <div class="flex align-items-center gap-3">
           <span class="flex align-items-center gap-2">
             <i class="pi pi-building icon-secondary"></i>
-            <span class="paragraph"
-              >Cerca a
-              {{
-                JSON.parse(post.nearestUniversities)
-                  .map((u) => u.initials)
-                  .join(', ')
-              }}</span
-            >
+
+                  <span class="paragraph">
+                    {{ $t('posts-view.near-to') }}
+                    <span
+                      v-for="(university, index) in JSON.parse(post.nearest_universities)"
+                      :key="index"
+                    >
+                      {{ university
+                      }}<span
+                      v-if="index < JSON.parse(post.nearest_universities).length - 1"
+                    >,
+                      </span>
+                    </span>
+                  </span>
           </span>
         </div>
         <br />

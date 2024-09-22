@@ -2,11 +2,11 @@ import { http } from '../../shared/config/http.config'
 
 export class RoomsApiService {
   getAllPosts() {
-    return http.get('/post')
+    return http.get('/listarposts')
   }
 
   getPostById(id) {
-    return http.get(`/post/${id}`)
+    return http.get(`/listarpost/${id}`)
   }
 
   createPost(data) {
@@ -18,10 +18,10 @@ export class RoomsApiService {
   }
 
   getAllUniversities() {
-    return http.get('/university')
+    return http.get('/listaruniversities')
   }
 
   createReservation(data) {
-    return http.post('/reservation', data)
+   return http.post('/reservation', data)
   }
 }
