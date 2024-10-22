@@ -82,14 +82,18 @@ export default {
     saveReservation() {
       this.submitted = true
       if (this.reservation.checkInDate) {
+        const checkInDateFormatted = moment(this.reservation.checkInDate).format('MM/DD/YYYY hh:mm A');
+        const checkOutDateFormatted = moment(this.reservation.checkOutDate).format('MM/DD/YYYY hh:mm A');
+
         this.$roomsApiService
-          .createReservation({
-            check_in_date: this.reservation.checkInDate,
-            check_out_date: this.reservation.checkOutDate,
-            payment_method: this.reservation.paymentMethod.name,
-            post_id: this.post.id,
-            user_id: this.userData.id,
-            stay_hours: this.reservation.stayhours
+            .createReservation({
+              check_in_date: checkInDateFormatted,  // Usa la fecha formateada
+              check_out_date: checkOutDateFormatted, // Usa la fecha formateada
+              payment_method: this.reservation.paymentMethod.name,
+              post_id: this.post.id,
+              user_id: this.userData.id,
+              stay_hours: this.reservation.stayhours,
+              total_price: this.reservation.total_price,
           })
           .then((res) => {
             this.$toast.add({
@@ -124,6 +128,7 @@ export default {
 
       //obtiene el monto total (precio x horas totales)
       const totalPrice = checkInDate && checkOutDate ? (this.post.price * duration.asHours()).toFixed(2) : 0
+      this.reservation.total_price = (this.post.price * duration.asHours()).toFixed(2)
 
       return {
         timeDifference,
