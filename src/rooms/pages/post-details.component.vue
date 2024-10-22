@@ -9,6 +9,7 @@ export default {
       submitted: false,
       post: {},
       reservation: {},
+      userData: {},
       paymentMethods: [
         {
           name: 'VISA',
@@ -18,12 +19,12 @@ export default {
         {
           name: 'YAPE',
           logoUrl:
-            'https://media.discordapp.net/attachments/1146490170917535764/1166986674320973844/l048nvZUXxmhjaDjxdJntZWSj03oOAK0ETKCQZup-Ea-aM_h8M94Jz87cw8JiwCHSEbv8llHs900-c-k-c0x00ffffff-no-rj.png?ex=654c7c08&is=653a0708&hm=454875ae848f7e6e742168e46ba1e6c0909fcc151c7d3da696d2b54bf23bbd48&=&width=671&height=671'
+            'https://upload.wikimedia.org/wikipedia/commons/0/08/Icono_de_la_aplicaci%C3%B3n_Yape.png'
         },
         {
           name: 'PLIN',
           logoUrl:
-            'https://media.discordapp.net/attachments/1146490170917535764/1166986783234457630/plin-logo-967A4AF583-seeklogo.png?ex=654c7c22&is=653a0722&hm=8eaa3c9c58d6ddc2adbdb95a15c20e6ae58d704ce31297ffbc432e9db0a845e7&=&width=330&height=330'
+            'https://marketing-peru.beglobal.biz/wp-content/uploads/2024/09/logo-plin-fondo-transparente.png'
         },
         {
           name: 'PAYPAL',
@@ -32,13 +33,14 @@ export default {
         {
           name: 'EFECTIVO',
           logoUrl:
-            'https://media.discordapp.net/attachments/1146490170917535764/1166986970866655243/diseno-icono-dinero-efectivo_1692-61.png?ex=654c7c4f&is=653a074f&hm=858584d34d4fa7847422528d056fdb0564b7b9a9c4399f789446a573d4213c18&=&width=671&height=671'
+            'https://cdn.worldvectorlogo.com/logos/pago-efectivo-2020.svg'
         }
       ]
     }
   },
   created() {
     const postIdParam = this.$route.params.postId
+    this.userData = JSON.parse(localStorage.getItem('user-data')) //obtiene los datos del usuario guardados en el localstorage
     this.$roomsApiService
       .getPostById(postIdParam)
       .then((response) => {
@@ -82,11 +84,12 @@ export default {
       if (this.reservation.checkInDate) {
         this.$roomsApiService
           .createReservation({
-            checkInDate: this.reservation.checkInDate,
-            checkOutDate: this.reservation.checkOutDate,
-            paymentMethod: this.reservation.paymentMethod.name,
-            postId: this.post.id,
-            userId: 1
+            check_in_date: this.reservation.checkInDate,
+            check_out_date: this.reservation.checkOutDate,
+            payment_method: this.reservation.paymentMethod.name,
+            post_id: this.post.id,
+            user_id: this.userData.id,
+            stay_hours: this.reservation.stayhours
           })
           .then((res) => {
             this.$toast.add({
@@ -116,6 +119,7 @@ export default {
       const checkOut = moment(checkOutDate)
 
       const duration = moment.duration(checkOut?.diff(checkIn))
+      this.reservation.stayhours = duration.asHours()
       const timeDifference = `${duration.days()} días y ${duration.hours()} horas`
 
       //obtiene el monto total (precio x horas totales)
