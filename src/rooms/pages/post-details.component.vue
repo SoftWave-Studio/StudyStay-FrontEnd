@@ -7,32 +7,41 @@ export default {
       today: new Date(),
       isOpenReservationDialog: false,
       submitted: false,
+      isOpenAddMethodPayDialog: false,
+      submitted2: false,
       post: {},
+      MethodPay: {},
       reservation: {},
       userData: {},
+      cardCredit: [],
       paymentMethods: [
         {
           name: 'VISA',
-          logoUrl:
+          logo_url:
             'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Old_Visa_Logo.svg/1200px-Old_Visa_Logo.svg.png'
         },
         {
+          name: 'MASTER CARD',
+          logo_url:
+              'https://upload.wikimedia.org/wikipedia/commons/b/b7/MasterCard_Logo.svg'
+        },
+        {
           name: 'YAPE',
-          logoUrl:
+          logo_url:
             'https://upload.wikimedia.org/wikipedia/commons/0/08/Icono_de_la_aplicaci%C3%B3n_Yape.png'
         },
         {
           name: 'PLIN',
-          logoUrl:
+          logo_url:
             'https://marketing-peru.beglobal.biz/wp-content/uploads/2024/09/logo-plin-fondo-transparente.png'
         },
         {
           name: 'PAYPAL',
-          logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/a/a4/Paypal_2014_logo.png'
+          logo_url: 'https://upload.wikimedia.org/wikipedia/commons/a/a4/Paypal_2014_logo.png'
         },
         {
           name: 'EFECTIVO',
-          logoUrl:
+          logo_url:
             'https://cdn.worldvectorlogo.com/logos/pago-efectivo-2020.svg'
         }
       ]
@@ -68,6 +77,22 @@ export default {
         //   life: 3000
         // })
       })
+
+    this.$creditcardsApiService
+        .getAllCardsUser(this.userData.id)
+        .then((response) => {
+          this.cardCredit = response.data
+          this.paymentMethods = this.paymentMethods.concat(this.cardCredit)
+        })
+        // eslint-disable-next-line no-unused-vars
+        .catch((e) => {
+          this.$toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: `Error al obtener datos de las Credit Cards: ${e.message}`,
+            life: 3000
+          })
+        })
   },
   methods: {
     openNew() {
@@ -75,9 +100,53 @@ export default {
       this.submitted = false
       this.isOpenReservationDialog = true
     },
+    updatedNew(){
+      this.MethodPay = {}
+      this.submitted2 = false
+      this.isOpenAddMethodPayDialog = true
+    },
     hideDialog() {
       this.isOpenReservationDialog = false
       this.submitted = false
+    },
+    hideDialog2() {
+      this.isOpenAddMethodPayDialog = false
+      this.submitted2 = false
+    },
+    saveCard(){
+      this.submitted2 = true
+      if(this.MethodPay.name){
+        this.MethodPay.userid = this.userData.id
+        this.$creditcardsApiService
+            .createCreditcard({
+              userid: this.MethodPay.userid,
+              name: this.MethodPay.name,
+              name_holder: this.MethodPay.name_holder,
+              number_card: this.MethodPay.number_card,
+              cvv: this.MethodPay.cvv,
+              month: this.MethodPay.month,
+              year: this.MethodPay.year,
+            })
+            .then((res) => {
+              this.paymentMethods = this.paymentMethods.concat(this.MethodPay)
+              this.$toast.add({
+                severity: 'success',
+                summary: 'Successful',
+                detail: `Se agrego correctamente la tarjeta ${res.name}`,
+                life: 3000
+              })
+            })
+            .catch((e) => {
+              this.$toast.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: `Error al agregar tarjeta: ${e.message}`,
+                life: 3000
+              })
+            })
+        this.isOpenAddMethodPayDialog = false
+        this.MethodPay = {}
+      }
     },
     saveReservation() {
       this.submitted = true
@@ -285,7 +354,7 @@ export default {
           <template #value="slotProps">
             <div v-if="slotProps.value" class="flex align-items-center">
               <img
-                :src="slotProps.value.logoUrl"
+                :src="slotProps.value.logo_url"
                 :alt="slotProps.value.name"
                 style="width: 18px; margin-right: 10px"
               />
@@ -298,7 +367,7 @@ export default {
           <template #option="slotProps">
             <div class="flex align-items-center">
               <img
-                :src="slotProps.option.logoUrl"
+                :src="slotProps.option.logo_url"
                 :alt="slotProps.option.name"
                 style="width: 18px; margin-right: 10px"
               />
@@ -312,6 +381,14 @@ export default {
         </small>
       </span>
     </div>
+
+    <pv-button
+        icon="pi pi-plus"
+        class="rounded-button-secondary"
+        rounded
+        outlined
+        @click="updatedNew"
+    />
 
     <div class="field paragraph">
       <b>Tiempo de estadía:</b> {{ getReservationData().timeDifference }}
@@ -334,6 +411,129 @@ export default {
       />
     </template>
   </pv-dialog>
+
+  <!-- DIALOGO PARA AGREGAR PAY METHOD -->
+  <pv-dialog
+      v-model:visible="isOpenAddMethodPayDialog"
+      :style="{ width: '450px' }"
+      header="Agregar nuevo metodo de pago"
+      :modal="true"
+      class="p-fluid"
+  >
+    <!-- APODO DE LA TARJETA -->
+    <div class="field mt-3 paragraph">
+      <span class="p-float-label">
+        <pv-input-text
+            type="text"
+            id="title"
+            v-model.trim="MethodPay.name"
+            required="true"
+            autofocus
+            :class="{ 'p-invalid': submitted2 && !MethodPay.name }"
+        />
+        <label for="title">Apodo Metodo de Pago</label>
+        <small class="p-error" v-if="submitted2 && !MethodPay.name">Ingresa un apodo para la tarjeta</small>
+      </span>
+    </div>
+
+    <!-- TITULAR DE LA TARJETA -->
+    <div class="field paragraph">
+      <span class="p-float-label">
+        <pv-textarea
+            id="description"
+            v-model="MethodPay.name_holder"
+            required="true"
+            rows="2"
+            cols="20"
+            :class="{ 'p-invalid': submitted2 && !MethodPay.name_holder }"
+        />
+        <label for="description">Nombre del titular </label>
+        <small class="p-error" v-if="submitted2 && !MethodPay.name_holder">
+          Ingresa el nombre del titular
+        </small>
+      </span>
+    </div>
+
+    <!-- NUMERO DE TARJETA -->
+    <div class="field paragraph">
+      <span class="p-float-label">
+        <pv-input-text
+            type="text"
+            id="address"
+            v-model.trim="MethodPay.number_card"
+            required="true"
+            autofocus
+            :class="{ 'p-invalid': submitted2 && !MethodPay.number_card }"
+        />
+        <label for="address">Numero de tarjeta</label>
+        <small class="p-error" v-if="submitted2 && !MethodPay.number_card">Ingresa el numero de la tarjeta</small>
+      </span>
+    </div>
+
+    <!-- CVV -->
+    <div class="field paragraph">
+      <span class="p-float-label">
+        <pv-input-text
+            type="text"
+            id="address"
+            v-model.trim="MethodPay.cvv"
+            required="true"
+            autofocus
+            :class="{ 'p-invalid': submitted2 && !MethodPay.cvv }"
+        />
+        <label for="address">CVV</label>
+        <small class="p-error" v-if="submitted2 && !MethodPay.cvv">Ingresa el CVV de la tarjeta</small>
+      </span>
+    </div>
+
+    <!-- MONTH -->
+    <div class="field paragraph">
+      <span class="p-float-label">
+        <pv-input-text
+            type="text"
+            id="address"
+            v-model.trim="MethodPay.month"
+            required="true"
+            autofocus
+            :class="{ 'p-invalid': submitted2 && !MethodPay.month }"
+        />
+        <label for="address">MES</label>
+        <small class="p-error" v-if="submitted2 && !MethodPay.month">Ingresa el mes de vencimiento</small>
+      </span>
+    </div>
+
+    <!-- YEAR -->
+    <div class="field paragraph">
+      <span class="p-float-label">
+        <pv-input-text
+            type="text"
+            id="address"
+            v-model.trim="MethodPay.year"
+            required="true"
+            autofocus
+            :class="{ 'p-invalid': submitted2 && !MethodPay.year }"
+        />
+        <label for="address">ANIO</label>
+        <small class="p-error" v-if="submitted2 && !MethodPay.year">Ingresa el anio de vencimiento</small>
+      </span>
+    </div>
+
+    <template #footer>
+      <pv-button
+          :label="'Cancelar'.toUpperCase()"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="hideDialog2"
+      />
+      <pv-button
+          :label="'Crear'.toUpperCase()"
+          icon="pi pi-check"
+          class="p-button-text"
+          @click="saveCard"
+      />
+    </template>
+  </pv-dialog>
+
 </template>
 
 <style>

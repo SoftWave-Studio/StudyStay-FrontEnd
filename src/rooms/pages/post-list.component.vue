@@ -8,13 +8,15 @@ export default {
       userData: {},
       posts: [],
       postDialog: false,
+      updatedDialog: false,
       phoneDialog: false,
       deletePostDialog: false,
       phoneNumberToShow: '',
       post: {},
       submitted: false,
       filters: {},
-      universities: []
+      universities: [],
+      post_universities: ''
     }
   },
   created() {
@@ -55,9 +57,16 @@ export default {
       this.submitted = false
       this.postDialog = true
     },
+    // Actualiza el post si se cambia algun campo
+    updatedNew(post){
+      this.post = post
+      this.submitted = false
+      this.updatedDialog = true
+    },
     //esconde el dialog
     hideDialog() {
       this.postDialog = false
+      this.updatedDialog = false
       this.submitted = false
     },
 
@@ -124,6 +133,46 @@ export default {
         this.post = {}
       }
     },
+    //Actualizar el post
+    updatePost() {
+      this.submitted = true
+      if (this.post.title) {
+        this.post.nearest_universities = this.post_universities
+        this.updateNearestUniversities(this.post.nearest_universities)
+
+        this.$roomsApiService
+            .putPostId( this.post.id,{
+              title: this.post.title,
+              description: this.post.description,
+              address: this.post.address,
+              price: Number(this.post.price),
+              nearest_universities: JSON.stringify(this.post.nearest_universities),
+              image_url: this.post.image_url,
+              rating: this.post.rating,
+              userid: this.userData.id
+            })
+            .then((response) => {
+              this.post = response.data
+              this.$toast.add({
+                severity: 'success',
+                summary: 'Successful',
+                detail: 'Post Updated',
+                life: 3000
+              })
+            })
+            .catch((e) => {
+              this.$toast.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: `Error al actualizar post: ${e.message}`,
+                life: 3000
+              })
+            })
+        this.updatedDialog = false
+        this.post = {}
+      }
+    },
+    // Borra el Post segun el id
     deletePost() {
       this.$roomsApiService.deletePost(this.post.id).then((res) => {
         this.posts = this.posts.filter((p) => p.id !== this.post.id)
@@ -251,11 +300,20 @@ export default {
               <!-- BOTONES -->
               <div class="flex align-items-center gap-2 p-mt-2">
                 <pv-button
-                  icon="pi pi-trash"
-                  class="rounded-button-secondary"
-                  rounded
-                  outlined
-                  @click="confirmDeletePost(slotProps.data)"
+                    v-if="parseInt(slotProps.data.userid) === parseInt(userData.id)"
+                    icon="pi pi-pencil"
+                    class="rounded-button-secondary"
+                    rounded
+                    outlined
+                    @click="updatedNew(slotProps.data)"
+                />
+                <pv-button
+                    v-if="parseInt(slotProps.data.userid) === parseInt(userData.id)"
+                    icon="pi pi-trash"
+                    class="rounded-button-secondary"
+                    rounded
+                    outlined
+                    @click="confirmDeletePost(slotProps.data)"
                 />
                 <pv-button
                   icon="pi pi-phone"
@@ -418,6 +476,142 @@ export default {
         icon="pi pi-check"
         class="p-button-text"
         @click="savePost"
+      />
+    </template>
+  </pv-dialog>
+
+  <!-- DIALOGO PARA ACTUALIZAR POST -->
+  <pv-dialog
+      v-model:visible="updatedDialog"
+      :style="{ width: '450px' }"
+      header="Actualizar post"
+      :modal="true"
+      class="p-fluid"
+  >
+    <!-- TITLE -->
+    <div class="field mt-3 paragraph">
+      <span class="p-float-label">
+        <pv-input-text
+            type="text"
+            id="title"
+            v-model.trim="post.title"
+            required="true"
+            autofocus
+            :class="{ 'p-invalid': submitted && !post.title }"
+        />
+        <label for="title">Título</label>
+        <small class="p-error" v-if="submitted && !post.title">Ingresa un título</small>
+      </span>
+    </div>
+
+    <!-- DESCRIPTION -->
+    <div class="field paragraph">
+      <span class="p-float-label">
+        <pv-textarea
+            id="description"
+            v-model="post.description"
+            required="true"
+            rows="2"
+            cols="20"
+            :class="{ 'p-invalid': submitted && !post.description }"
+        />
+        <label for="description">Descripción </label>
+        <small class="p-error" v-if="submitted && !post.description">
+          Ingresa una descripción
+        </small>
+      </span>
+    </div>
+
+    <!-- ADDRESS -->
+    <div class="field paragraph">
+      <span class="p-float-label">
+        <pv-input-text
+            type="text"
+            id="address"
+            v-model.trim="post.address"
+            required="true"
+            autofocus
+            :class="{ 'p-invalid': submitted && !post.address }"
+        />
+        <label for="address">Dirección</label>
+        <small class="p-error" v-if="submitted && !post.address">Ingresa la dirección</small>
+      </span>
+    </div>
+
+    <!-- PRICE -->
+    <div class="field paragraph">
+      <span class="p-float-label">
+        <pv-input-text
+            id="price"
+            v-model="post.price"
+            required="true"
+            type="number"
+            autofocus
+            :class="{ 'p-invalid': submitted && !post.price }"
+        />
+        <label for="price">Precio x hora</label>
+        <small class="p-error" v-if="submitted && !post.price">Ingresa el precio</small>
+      </span>
+    </div>
+
+    <!-- NEAREST UNIVERSITIES -->
+    <div class="field paragraph">
+      <span class="p-float-label">
+        <pv-multiselect
+            id="nearest_universities"
+            v-model="post_universities"
+            display="chip"
+            :options="universities"
+            optionLabel="initials"
+            :class="{ 'p-invalid': submitted && !post_universities }"
+            @change="updateNearestUniversities"
+        >
+          <template #option="slotProps">
+            <div class="flex align-items-center">
+              <img
+                  :src="slotProps.option.logourl"
+                  :alt="slotProps.option.initials"
+                  style="width: 18px; margin-right: 10px"
+              />
+              <div>{{ slotProps.option.name }}</div>
+            </div>
+          </template>
+        </pv-multiselect>
+        <label for="nearest_universities">Universidades cercanas</label>
+        <small class="p-error" v-if="submitted && !post_universities">
+          Selecciona las universidades cercanas
+        </small>
+      </span>
+    </div>
+
+    <!-- IMAGE URL -->
+    <div class="field paragraph">
+      <span class="p-float-label">
+        <pv-input-text
+            type="text"
+            id="imageUrl"
+            v-model.trim="post.image_url"
+            required="true"
+            autofocus
+            :class="{ 'p-invalid': submitted && !post.image_url }"
+        />
+        <label for="imageUrl">URL de la foto</label>
+        <small class="p-error" v-if="submitted && !post.image_url">Ingresa una imagen</small>
+      </span>
+    </div>
+
+    <template #footer>
+      <pv-button
+          :label="'Cancelar'.toUpperCase()"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="hideDialog"
+      />
+      <pv-button
+          :label="'Actualizar'.toUpperCase()"
+          icon="pi pi-check"
+          class="p-button-text"
+          @click="updatePost"
       />
     </template>
   </pv-dialog>

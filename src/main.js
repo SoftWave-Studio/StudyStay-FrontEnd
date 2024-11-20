@@ -38,6 +38,7 @@ import { RoomsApiService } from './rooms/service/rooms.service'
 //i18n
 import i18n from '@/i18n'
 import { UniversitiesApiService } from '@/rooms/service/universities.service'
+import {CreditcardServiceApiService} from "@/rooms/service/creditcard.service";
 
 const app = createApp(App)
   .use(i18n)
@@ -68,5 +69,6 @@ const app = createApp(App)
 app.config.globalProperties.$securityApiService = new SecurityApiService()
 app.config.globalProperties.$roomsApiService = new RoomsApiService()
 app.config.globalProperties.$universitiesApiService = new UniversitiesApiService()
+app.config.globalProperties.$creditcardsApiService = new CreditcardServiceApiService()
 
 app.mount('#app')
