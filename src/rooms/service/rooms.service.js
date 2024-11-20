@@ -21,6 +21,10 @@ export class RoomsApiService {
     return http.get('/listaruniversities')
   }
 
+  putPostId(id, data){
+    return http.put(`/post/${id}`, data)
+  }
+
   createReservation(data) {
    return http.post('/reservation', data)
   }

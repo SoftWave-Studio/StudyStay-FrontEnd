@@ -13,7 +13,7 @@ export default {
     login() {
       this.submitted = true;
       this.loading = true;
-      if (this.email && this.password) {
+      if (this.$securityApiService.signIn(this.email, this.password)) {
         this.$securityApiService
           .signIn(this.email, this.password)
           .then((res) => {
